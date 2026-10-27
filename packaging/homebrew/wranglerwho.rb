@@ -1,8 +1,7 @@
 # Canonical source for the Homebrew formula.
-# It is published to the tap repo (dazecoop/homebrew-tap) as Formula/wranglerwho.rb.
-# The url + sha256 point at the npm tarball, so this activates once `npm publish` runs.
-# If you change the package before publishing, refresh sha256 with:
-#   npm pack && shasum -a 256 wranglerwho-*.tgz
+# On a `v*` tag, .github/workflows/release.yml sets the version + sha256 here and
+# commits the result to the tap repo (dazecoop/homebrew-tap) as Formula/wranglerwho.rb.
+# To refresh the sha256 by hand:  npm pack && shasum -a 256 wranglerwho-*.tgz
 class Wranglerwho < Formula
   desc "Switch between multiple Cloudflare / wrangler accounts"
   homepage "https://github.com/dazecoop/wranglerwho"

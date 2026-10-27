@@ -1,0 +1,69 @@
+name: release
+
+# Tag a version to ship it:   npm version patch && git push --follow-tags
+# This then: publishes to npm, and bumps the Homebrew formula in the tap.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # create the GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Check tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag v$TAG does not match package.json version $PKG" >&2
+            exit 1
+          fi
+          echo "VERSION=$PKG" >> "$GITHUB_ENV"
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Hash the published tarball
+        run: |
+          TGZ="$(npm pack --silent)"
+          echo "SHA256=$(shasum -a 256 "$TGZ" | awk '{print $1}')" >> "$GITHUB_ENV"
+          rm -f "$TGZ"
+
+      - name: Bump the Homebrew formula in the tap
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/dazecoop/homebrew-tap.git" tap
+          # Start from the canonical formula, then set the new version + sha256.
+          sed -E \
+            -e "s|(wranglerwho-)[0-9][^\"/]*(\.tgz)|\1${VERSION}\2|" \
+            -e "s|(sha256 \")[0-9a-f]{64}|\1${SHA256}|" \
+            packaging/homebrew/wranglerwho.rb > tap/Formula/wranglerwho.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/wranglerwho.rb
+          if git diff --cached --quiet; then
+            echo "Formula already up to date."
+          else
+            git commit -m "wranglerwho ${VERSION}"
+            git push
+          fi
+
+      - name: GitHub Release
+        run: gh release create "v${VERSION}" --title "v${VERSION}" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
