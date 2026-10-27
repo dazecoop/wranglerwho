@@ -4,7 +4,7 @@
   <img src="assets/hero.png" alt="wranglerwho — pick a Cloudflare account, then run wrangler natively" width="840">
 </p>
 
-Switch between multiple Cloudflare accounts from the terminal — like `supawho`, but for `wrangler`.
+Switch between multiple Cloudflare accounts from the terminal — like [`supawho`](https://github.com/EliaTolin/supawho), but for `wrangler`.
 
 ```
 $ wranglerwho
@@ -70,21 +70,38 @@ Switching never re-opens a browser: login happens once per account, at `add` tim
 
 ## 📦 Installation
 
-wranglerwho is a tiny Node CLI, so one command installs it the same way on
-**macOS, Linux, and Windows** — there are no per-OS binaries to pick from. You
-need **Node.js 18+** and a **wrangler with auth profiles** (see
-[Requirements](#requirements)).
+wranglerwho is a tiny Node CLI — all it needs is **Node.js 18+** and a
+**wrangler with auth profiles** (see [Requirements](#requirements)). Every
+option below installs the same single CLI.
 
-### npm — every platform
+### 🍎 Homebrew — macOS & Linux
+
+```sh
+brew install dazecoop/tap/wranglerwho
+```
+
+### 📦 npm — every platform
 
 ```sh
 npm install -g wranglerwho
 ```
 
-Prefer not to install anything? Run it on demand:
+Or run it without installing:
 
 ```sh
 npx wranglerwho
+```
+
+### 🐧 Install script — macOS & Linux
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/dazecoop/wranglerwho/main/install.sh | sh
+```
+
+### 🪟 Windows
+
+```powershell
+irm https://raw.githubusercontent.com/dazecoop/wranglerwho/main/install.ps1 | iex
 ```
 
 ### From source
