@@ -7,7 +7,7 @@ class Wranglerwho < Formula
   desc "Switch between multiple Cloudflare / wrangler accounts"
   homepage "https://github.com/dazecoop/wranglerwho"
   url "https://registry.npmjs.org/wranglerwho/-/wranglerwho-0.1.0.tgz"
-  sha256 "e9a1fd6d74d1d41db9351751d9767477eb66ce07f11540a3c637bf906bf7bee3"
+  sha256 "ade3d2390961b621d417436ce08bafe9554eabf3f2e21e10d7bc2e43e5a1422e"
   license "MIT"
 
   depends_on "node"
