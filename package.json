@@ -1,0 +1,34 @@
+{
+  "name": "wranglerwho",
+  "version": "0.1.0",
+  "description": "Switch between Cloudflare / wrangler accounts with a picker and notes, on top of native wrangler auth profiles.",
+  "bin": {
+    "wranglerwho": "bin/wranglerwho.js"
+  },
+  "files": [
+    "bin",
+    "assets",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "cloudflare",
+    "wrangler",
+    "workers",
+    "cli",
+    "accounts",
+    "auth",
+    "profiles"
+  ],
+  "license": "MIT",
+  "author": "daze",
+  "preferGlobal": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dazecoop/wranglerwho.git"
+  },
+  "homepage": "https://github.com/dazecoop/wranglerwho#readme",
+  "bugs": "https://github.com/dazecoop/wranglerwho/issues"
+}

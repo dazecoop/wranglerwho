@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wranglerwho</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --amber:#fbbf37; --orange:#f6821f; --deep:#e35100;
+    --ink:#0b0906; --fg:#efe8df; --muted:#9a8f82;
+    --term:#000; --sel:#5fd0e6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);}
+  body{
+    font-family:"Inter",system-ui,sans-serif; color:var(--fg);
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:44px 40px;
+    background:
+      radial-gradient(760px 420px at 70% 18%, rgba(246,130,31,.16), transparent 60%),
+      radial-gradient(640px 520px at 12% 96%, rgba(227,81,0,.12), transparent 62%),
+      var(--ink);
+  }
+  .stage{width:900px; max-width:100%; display:flex; flex-direction:column; gap:26px;}
+
+  .window{
+    border-radius:14px; overflow:hidden; background:var(--term);
+    border:1px solid #241b12;
+    box-shadow:0 40px 90px -40px #000, 0 0 0 1px rgba(246,130,31,.07);
+  }
+  .bar{display:flex; align-items:center; gap:8px; padding:12px 15px; background:#0b0b0b; border-bottom:1px solid #1b1b1b;}
+  .bar i{width:12px;height:12px;border-radius:50%;display:block}
+  .r{background:#ff5f57}.y{background:#febc2e}.g{background:#28c840}
+  .bar span{margin-left:10px; font-family:"JetBrains Mono",monospace; font-size:12.5px; color:#8a8a8a}
+
+  .screen{padding:22px 24px 26px; font-family:"JetBrains Mono","SF Mono",Menlo,monospace; font-size:15px; line-height:1.5;}
+  .prompt{color:#cdbfae; margin-bottom:12px}
+  .prompt .pg{color:var(--orange)}
+  .prompt .cmd{color:#efe8df}
+
+  pre.badge{
+    font-family:"JetBrains Mono",monospace; font-size:15px; line-height:1.22; margin:6px 0 2px;
+    background:linear-gradient(90deg,var(--amber) 2%,var(--orange) 52%,var(--deep) 98%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    white-space:pre;
+  }
+  .tagline{margin-top:16px; color:#f3ede4}
+  .tagline b{font-weight:700}
+  .sep{height:14px}
+  .selhdr{color:#f3ede4; font-weight:700}
+  .selhdr .hint{color:var(--muted); font-weight:400}
+  .row{white-space:pre; margin-top:3px; color:var(--muted)}
+  .row .n{color:#6f6458}
+  .row .nm{color:#d9d1c6}
+  .row .meta{color:#7c7266}
+  .row .note{color:#d9a441}
+  .row.sel .ptr{color:var(--sel)}
+  .row.sel .nm{color:var(--sel); font-weight:700}
+
+  .cap{display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;}
+  .cap h1{font-size:15px; font-weight:500; letter-spacing:.015em; color:#d8cec1;}
+  .cap h1 b{color:var(--orange); font-weight:700}
+  .chips{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+  .chip{
+    font-size:12.5px; color:#d6ccbf; border:1px solid #3a2c1c; border-radius:999px;
+    padding:6px 13px; background:rgba(246,130,31,.06);
+  }
+  .chip b{color:var(--amber); font-weight:600}
+</style></head>
+<body>
+  <div class="stage">
+    <div class="window">
+      <div class="bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>wranglerwho — zsh</span></div>
+      <div class="screen">
+        <div class="prompt">~ <span class="pg">❯</span> <span class="cmd">wranglerwho</span></div>
+        <pre class="badge">                            _                _        
+ __ __ ___ _ __ _ _ _  __ _| |___ _ ___ __ _| |_  ___ 
+ \ V  V / '_/ _` | ' \/ _` | / -_) '_\ V  V / ' \/ _ \
+  \_/\_/|_| \__,_|_||_\__, |_\___|_|  \_/\_/|_||_\___/
+                      |___/                           </pre>
+        <div class="tagline">⛅  <b>Who are you today?</b></div>
+        <div class="sep"></div>
+        <div class="selhdr">Select an account: <span class="hint">   ↑/↓ or number · enter · q</span></div>
+        <div class="row sel"><span class="ptr">❯</span> <span class="n">1.</span> <span class="nm">acme-prod</span>     <span class="meta">you@acme.io · ACME Inc</span>      <span class="note">— prod, be careful</span></div>
+        <div class="row">  <span class="n">2.</span> <span class="nm">personal</span>      <span class="meta">you@gmail.com · Personal</span>     <span class="note">— side projects</span></div>
+        <div class="row">  <span class="n">3.</span> <span class="nm">client-beta</span>   <span class="meta">hey@beta.studio · Beta Studio</span>  <span class="note">— billed monthly</span></div>
+      </div>
+    </div>
+    <div class="cap">
+      <h1>Switch between Cloudflare accounts with <b>wranglerwho</b> — pick one, then run wrangler natively.</h1>
+      <div class="chips">
+        <span class="chip">native <b>wrangler profiles</b></span>
+        <span class="chip">per-account <b>notes</b></span>
+        <span class="chip">no more <b>wrong-browser logins</b></span>
+      </div>
+    </div>
+  </div>
+</body></html>
