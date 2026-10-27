@@ -4,6 +4,13 @@
   <img src="assets/hero.png" alt="wranglerwho — pick a Cloudflare account, then run wrangler natively" width="840">
 </p>
 
+<p align="center">
+  <a href="https://www.npmjs.com/package/wranglerwho"><img src="https://img.shields.io/npm/v/wranglerwho?color=f6821f&label=npm" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/wranglerwho"><img src="https://img.shields.io/npm/dm/wranglerwho?color=f6821f" alt="npm downloads"></a>
+  <a href="#requirements"><img src="https://img.shields.io/node/v/wranglerwho?color=f6821f" alt="node version"></a>
+  <a href="#license"><img src="https://img.shields.io/npm/l/wranglerwho?color=f6821f" alt="license"></a>
+</p>
+
 Switch between multiple Cloudflare accounts from the terminal — like [`supawho`](https://github.com/EliaTolin/supawho), but for `wrangler`.
 
 ```
