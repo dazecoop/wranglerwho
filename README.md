@@ -165,26 +165,6 @@ wranglerwho                          # pick, then live in a "work" shell
   isn't a stable contract; accounts you add through wranglerwho always show up
   regardless, since their names are recorded in `notes.json`.
 
-## 🏷️ Releasing (maintainers)
-
-Releases are automated by [`.github/workflows/release.yml`](.github/workflows/release.yml).
-Cut one by tagging a version:
-
-```sh
-npm version patch        # bumps package.json and creates the vX.Y.Z commit + tag
-git push --follow-tags
-```
-
-On a `v*` tag the workflow publishes to npm and commits the bumped formula to
-[`dazecoop/homebrew-tap`](https://github.com/dazecoop/homebrew-tap), so `npm`,
-`npx`, and `brew` all land on the new version with no manual steps.
-
-**One-time setup — two Actions secrets** (Settings → Secrets and variables → Actions):
-
-- `NPM_TOKEN` — an npm **Automation** token with publish rights (bypasses 2FA).
-- `HOMEBREW_TAP_TOKEN` — a GitHub PAT that can write to the tap repo
-  (fine-grained: `dazecoop/homebrew-tap` → Contents: Read and write).
-
 ## License
 
 MIT
