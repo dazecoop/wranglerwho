@@ -1,6 +1,6 @@
 {
   "name": "wranglerwho",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Switch between Cloudflare / wrangler accounts with a picker and notes, on top of native wrangler auth profiles.",
   "bin": {
     "wranglerwho": "bin/wranglerwho.js"

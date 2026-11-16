@@ -195,14 +195,54 @@ function nativeProfiles() {
   return rows;
 }
 
+// Where wrangler keeps a profile's credentials (<name>.toml). Used only to
+// date profiles that predate wranglerwho tracking createdAt.
+function profileConfigFile(name) {
+  const dirs = [
+    path.join(HOME, "Library", "Preferences", ".wrangler", "config"),
+    path.join(process.env.XDG_CONFIG_HOME || path.join(HOME, ".config"), ".wrangler", "config"),
+    path.join(HOME, ".wrangler", "config"),
+  ];
+  for (const d of dirs) {
+    const f = path.join(d, `${name}.toml`);
+    if (fs.existsSync(f)) return f;
+  }
+  return null;
+}
+
 // Merge native profiles with notes metadata into a display list. Accounts we
 // recorded in notes.json always show up too, even if list parsing misses them.
+// Ordered by when each account was added (createdAt), never alphabetically:
+// `wrangler auth list` sorts by name, so its order is ignored.
 function listProfiles() {
   const notes = readNotes();
   const map = new Map();
+  for (const k of Object.keys(notes)) map.set(k, { name: k, bound: "" });
   for (const { name, bound } of nativeProfiles()) map.set(name, { name, bound });
-  for (const k of Object.keys(notes)) if (!map.has(k)) map.set(k, { name: k, bound: "" });
-  return [...map.values()].map(({ name, bound }) => {
+
+  // Backfill createdAt for older entries / profiles made outside wranglerwho,
+  // from the credentials file's creation time, so their position stays fixed.
+  let dirty = false;
+  for (const name of map.keys()) {
+    if (notes[name] && notes[name].createdAt) continue;
+    let when = new Date();
+    const f = profileConfigFile(name);
+    if (f) {
+      try {
+        const st = fs.statSync(f);
+        when = st.birthtimeMs > 0 ? st.birthtime : st.mtime;
+      } catch {}
+    }
+    notes[name] = { ...(notes[name] || {}), createdAt: when.toISOString() };
+    dirty = true;
+  }
+  if (dirty) writeNotes(notes);
+
+  const keys = [...map.keys()];
+  const ts = (n) => Date.parse(notes[n].createdAt) || 0;
+  const order = keys.slice().sort((a, b) => ts(a) - ts(b) || keys.indexOf(a) - keys.indexOf(b));
+
+  return order.map((n) => map.get(n)).map(({ name, bound }) => {
     const meta = notes[name] || {};
     return {
       name, label: meta.label || name, bound: bound || "",
@@ -213,32 +253,45 @@ function listProfiles() {
 
 function parseWhoami(text) {
   const out = {};
+  text = text.replace(/\x1b\[[0-9;]*m/g, "");
   const email = text.match(/email\s+([^\s.]+@[^\s.]+(?:\.[^\s.]+)+)/i);
   if (email) out.email = email[1];
-  const id = text.match(/\b([0-9a-f]{32})\b/i);
-  if (id) {
-    out.accountId = id[1];
-    for (const line of text.split("\n")) {
-      if (line.includes(id[1]) && line.includes("│")) {
-        const cells = line.split("│").map((s) => s.replace(/\x1b\[[0-9;]*m/g, "").trim()).filter(Boolean);
-        if (cells.length) out.accountName = cells[0];
-        break;
-      }
-    }
+  // Account table rows: │ <name> │ <32-hex id> │. A login can see several
+  // accounts; prefer the one named after the login's own email.
+  const rows = [];
+  for (const line of text.split("\n")) {
+    if (!line.includes("│")) continue;
+    const cells = line.split("│").map((s) => s.trim()).filter(Boolean);
+    const id = cells.find((s) => /^[0-9a-f]{32}$/i.test(s));
+    if (id && cells[0] !== id) rows.push({ accountName: cells[0], accountId: id });
   }
+  const mine = out.email && rows.find((r) => r.accountName.toLowerCase().startsWith(out.email.toLowerCase()));
+  const pick = mine || rows[0];
+  if (pick) Object.assign(out, pick);
   return out;
 }
 
 // Best-effort: capture a profile's identity by briefly binding it to a temp
 // dir and running whoami there, then unbinding. Never fatal.
+//
+// The dir lives under ~/.wranglerwho and is realpath'd: on macOS os.tmpdir()
+// sits behind the /var -> /private/var symlink, and wrangler silently ignores
+// a binding there and falls back to the `default` login, which recorded the
+// wrong account's email. We also require whoami to confirm the profile it
+// used, so a fallback can never be saved as this account's identity.
 function captureIdentity(name) {
   let tmp;
   try {
-    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "wranglerwho-id-"));
+    const base = path.join(ROOT, "tmp");
+    fs.mkdirSync(base, { recursive: true });
+    tmp = fs.realpathSync(fs.mkdtempSync(path.join(base, "id-")));
     const act = wrangler(["auth", "activate", name, tmp]);
     if (act.status !== 0) return {};
     const who = wrangler(["whoami"], { cwd: tmp });
-    return parseWhoami((who.stdout || "") + "\n" + (who.stderr || ""));
+    const text = ((who.stdout || "") + "\n" + (who.stderr || "")).replace(/\x1b\[[0-9;]*m/g, "");
+    const active = text.match(/Active profile:\s*(\S+)/);
+    if (!active || active[1] !== name) return {};
+    return parseWhoami(text);
   } catch {
     return {};
   } finally {
@@ -480,6 +533,36 @@ function cmdRun(args) {
   process.exit(r.status || 0);
 }
 
+// Re-capture email / account for one account, or all of them.
+function cmdRefresh(args) {
+  assertNativeProfiles();
+  const name = args.find((a) => !a.startsWith("-"));
+  guardDefault(name);
+  const profiles = listProfiles();
+  let targets = profiles;
+  if (name) {
+    const p = matchProfile(profiles, name);
+    if (!p) die(`no account named "${name}"`);
+    targets = [p];
+  }
+  for (const p of targets) {
+    const info = captureIdentity(p.name);
+    if (!info.email) {
+      console.log(yellow("! ") + `${bold(p.label)} ${dim("couldn't read identity (logged out?); left unchanged")}`);
+      continue;
+    }
+    const notes = readNotes();
+    notes[p.name] = {
+      ...(notes[p.name] || {}),
+      email: info.email,
+      accountName: info.accountName || "",
+      accountId: info.accountId || "",
+    };
+    writeNotes(notes);
+    console.log(green("✓ ") + `${bold(p.label)} ${dim(info.email)}` + (info.accountName ? dim(` · ${info.accountName}`) : ""));
+  }
+}
+
 async function cmdNote(args) {
   const name = args[0];
   if (!name) die("usage: wranglerwho note <name> [text]");
@@ -513,8 +596,10 @@ async function cmdRm(args) {
   console.log(green("✓ ") + `removed ${p.label}`);
 }
 
+const VERSION = require("../package.json").version;
+
 function cmdHelp() {
-  console.log(`${bold("wranglerwho")} — switch between Cloudflare / wrangler accounts
+  console.log(`${bold("wranglerwho")} ${dim("v" + VERSION)} — switch between Cloudflare / wrangler accounts
 
 ${bold("Usage")}
   wranglerwho                 pick an account, then run wrangler in a subshell
@@ -524,7 +609,8 @@ ${bold("Usage")}
   wranglerwho ls              list accounts and notes
   wranglerwho note <name> [text]   set/edit notes for an account
   wranglerwho rm <name>       delete an account (wrangler auth delete)
-  wranglerwho help
+  wranglerwho refresh [name]  re-read email / account name (one or all)
+  wranglerwho help | --version
 
 ${bold("How it works")}
   Logins and credentials are wrangler's own native auth profiles (beta).
@@ -541,9 +627,11 @@ async function main() {
     case "add": case "login": return cmdAdd(args);
     case "ls": case "list": return cmdList();
     case "run": return cmdRun(args);
+    case "refresh": return cmdRefresh(args);
     case "note": case "notes": return cmdNote(args);
     case "rm": case "remove": case "delete": return cmdRm(args);
     case "help": case "-h": case "--help": return cmdHelp();
+    case "version": case "-v": case "--version": return console.log(VERSION);
     default:
       guardDefault(cmd);
       if (matchProfile(listProfiles(), cmd)) return cmdUse([cmd]);

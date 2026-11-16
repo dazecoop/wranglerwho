@@ -135,7 +135,8 @@ wranglerwho add <name>      log in a new account (wrangler auth create)
 wranglerwho ls              list accounts and notes
 wranglerwho note <name> [text]   set/edit notes for an account
 wranglerwho rm <name>       delete an account (wrangler auth delete)
-wranglerwho help
+wranglerwho refresh [name]  re-read email / account name (one or all)
+wranglerwho help | --version
 ```
 
 Examples:
